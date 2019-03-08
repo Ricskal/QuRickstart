@@ -1,6 +1,7 @@
 ﻿#include <Array.au3>
 #include <Excel.au3>
 #include <Date.au3>
+#include <File.au3>
 
 ;----------------------& Variables &----------------------;
 Global $g_sWorkbookPadWAF = "V:\TSC\K&S\WG Portaal\Rick\GO_eWG_Testscript\WAF-Execution_v2.0 - eWG_Testscript.xls" ;Path to the WAF excelsheet. Change this when needed.
@@ -16,7 +17,7 @@ Global $g_sDefaultFolder = ""
 Global $g_sCellDefaultFolder = "B9"
 Global $g_sTestscenarioName = ""
 Global $g_sCellTestscenario = "B4"
-Global $g_iAmounOfPgdn = 50 ;Amount of time to press the button 'PgDn' (Page down) in the WAF tool. Increase if you have to many testscenarios, or just delete them.
+Global $g_iAmounOfPgdn = 0
 
 ;------------------------& Script &-----------------------;
 HotKeySet($g_sHotKeyStart, "StartTestNormal") ;Set Hotkeys and wait for input.
@@ -53,6 +54,7 @@ Func Main()
 	  CreateXML($sTestcaseNumber, $sTestcaseID)
 	  Local $oExcel = OpenExcel()
 	  Local $oWorkbookWAF = OpenWorkbook($oExcel,$g_sWorkbookPadWAF)
+	  CountFilesDir($g_sDefaultFolder)
 	  Run("QuRickstart_StartTest_v2.0.exe " & $g_iAmounOfPgdn, "")
 	  If $g_bDebugModes == True Then
 		 $oExcel.Run("StartTestDebug")
@@ -108,7 +110,7 @@ Func OpenExcel() ;Start up Excel or connect to a running instance.
 	  MsgBox(0, "QuRickstart error!", "Error opening excel" & @CRLF & "@error = " & @error & ", @extended = " & @extended)
 	  Wait()
    EndIf
-	  Return($oExcel)
+   Return($oExcel)
 EndFunc
 
 Func OpenWorkbook($oExcel, $vWorkbookPad) ;Opens an existing Workbook.
@@ -117,7 +119,7 @@ Func OpenWorkbook($oExcel, $vWorkbookPad) ;Opens an existing Workbook.
 	  MsgBox(0, "QuRickstart error!", "Error opening the workbook." & @CRLF & "@error = " & @error & ", @extended = " & @extended)
 	  Wait()
    EndIf
-	  Return($oWorkbook)
+   Return($oWorkbook)
    EndFunc
 
 Func ReadWorkbook($oWorkbook, $sSheet, $sExcelCell) ;Read from workbook. Choose the open sheet, specific cell.
@@ -126,7 +128,7 @@ Func ReadWorkbook($oWorkbook, $sSheet, $sExcelCell) ;Read from workbook. Choose 
 	  MsgBox(0, "QuRickstart error!", "Error reading from workbook." & @CRLF & "@error = " & @error & ", @extended = " & @extended)
 	  Wait()
    EndIf
-	  Return($sCellValue)
+   Return($sCellValue)
 EndFunc
 
 Func AttachWorkbook($sFilePath) ;Attach to open workbook based on title.
@@ -135,7 +137,7 @@ Func AttachWorkbook($sFilePath) ;Attach to open workbook based on title.
 	  MsgBox(0, "QuRickstart error!", "Error attaching to workbook." & @CRLF & "@error = " & @error & ", @extended = " & @extended)
 	  Wait()
    EndIf
-	  Return($oWorkbook)
+   Return($oWorkbook)
    EndFunc
 
 Func ListExcelWorkbooks() ;Lists and returns a list of all open Excel workbooks.
@@ -144,8 +146,23 @@ Func ListExcelWorkbooks() ;Lists and returns a list of all open Excel workbooks.
 	  MsgBox(0, "QuRickstart error!", "Error listing Excel workbooks." & @CRLF & "@error = " & @error & ", @extended = " & @extended)
 	  Wait()
    EndIf
-	  Return($asWorkbookList)
-   EndFunc
+   Return($asWorkbookList)
+EndFunc
+
+Func CountFilesDir($sDir)
+   Local $aFileList = _FileListToArray($sDir)
+   If @error Then
+	  MsgBox(0, "QuRickstart error!", "Error opening excel" & @CRLF & "@error = " & @error & ", @extended = " & @extended)
+	  Wait()
+   EndIf
+   Local $iFileCount = $aFileList[0]
+   If $iFileCount <= 19 Then
+	  $g_iAmounOfPgdn = 1
+   Else
+	  $g_iAmounOfPgdn = (Int(($iFileCount - 19) / 18) + 2)
+   EndIf
+   ;Return $g_iAmounOfPgdn
+EndFunc
 
 Func Wait() ;Waits until a hotkey is pressed.
    While True
