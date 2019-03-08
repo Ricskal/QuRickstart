@@ -3,26 +3,29 @@
 #include <Date.au3>
 #include <File.au3>
 
-;----------------------& Variables &----------------------;
-Global $g_sWorkbookPadWAF = "V:\TSC\K&S\WG Portaal\Rick\GO_eWG_Testscript\WAF-Execution_v2.0 - eWG_Testscript.xls" ;Path to the WAF excelsheet. Change this when needed.
-Global $g_bDeleteTestcase = True
-Global $g_sHotKeyStart = "{F4}" ;Hotkey for starting the script.
-Global $g_sHotKeyDebug = "{F3}" ;Hotkey for starting the script in debug mode.
-Global $g_sHotKeyStop = "{Escape}" ;Hotkey for stoppping the script.
-Global $g_bDebugModes = False ;If debug modes is true, start test in debug mode. If false start the test in normal mode.
-Global $g_oWorkbook = Null
-Global $g_sTitle = ""
-Global $g_sCellTestcase = "B1" ;Cell in Excel where to find a number, should be the same in all testscript templates.
-Global $g_sDefaultFolder = ""
-Global $g_sCellDefaultFolder = "B9"
-Global $g_sTestscenarioName = ""
-Global $g_sCellTestscenario = "B4"
-Global $g_iAmounOfPgdn = 0
+;----------------------& .Ini global variables &----------------------;
+Global $g_sIniFilePath 			= @ScriptDir & "\QuRickstart.ini"
+Global $g_sHotKeyStart 			= IniRead($g_sIniFilePath, "Hotkeys"	, "HotKey_Start_Normal"			, "F4")
+Global $g_sHotKeyDebug 			= IniRead($g_sIniFilePath, "Hotkeys"	, "HotKey_Start_Debug"			, "F3")
+Global $g_sHotKeyStop 			= IniRead($g_sIniFilePath, "Hotkeys"	, "HotKey_Stop_QuRickstart"		, "Escape")
+Global $g_sWAFWorkbookPath		= IniRead($g_sIniFilePath, "WAF"		, "WAF_Workbook_Path"			, "")
+Global $g_bDeleteTestcase 		= IniRead($g_sIniFilePath, "Testcase"	, "Delete_XML_Testcase"			, True)
+Global $g_sCellTestcase 		= IniRead($g_sIniFilePath, "Testcase"	, "Excel_Cell_Testcase"			, "B1")
+Global $g_sCellTestscenario 	= IniRead($g_sIniFilePath, "CoverSheet"	, "Excel_Cell_Testscenario"		, "B4")
+Global $g_sCellDefaultFolder 	= IniRead($g_sIniFilePath, "CoverSheet"	, "Excel_Cell_DefaultFolder"	, "B9")
+
+;----------------------& Other global variables &----------------------;
+Global $g_bDebugModes 			= False
+Global $g_oWorkbook 			= Null
+Global $g_sTitle 				= ""
+Global $g_sDefaultFolder 		= ""
+Global $g_sTestscenarioName 	= ""
+Global $g_iAmounOfPgdn 			= 0
 
 ;------------------------& Script &-----------------------;
-HotKeySet($g_sHotKeyStart, "StartTestNormal") ;Set Hotkeys and wait for input.
-HotKeySet($g_sHotKeyDebug, "DebugModes")
-HotKeySet($g_sHotKeyStop, "ExitScript")
+HotKeySet("{" & $g_sHotKeyStart	& "}", "StartTestNormal") ;Set Hotkeys and wait for input.
+HotKeySet("{" & $g_sHotKeyDebug	& "}", "DebugModes")
+HotKeySet("{" & $g_sHotKeyStop 	& "}", "ExitScript")
 Wait()
 
 Func Main()
@@ -53,7 +56,7 @@ Func Main()
 	  Local $sTestcaseID = CreateID()
 	  CreateXML($sTestcaseNumber, $sTestcaseID)
 	  Local $oExcel = OpenExcel()
-	  Local $oWorkbookWAF = OpenWorkbook($oExcel,$g_sWorkbookPadWAF)
+	  Local $oWorkbookWAF = OpenWorkbook($oExcel,$g_sWAFWorkbookPath)
 	  CountFilesDir($g_sDefaultFolder)
 	  Run("QuRickstart_StartTest_v2.0.exe " & $g_iAmounOfPgdn, "")
 	  If $g_bDebugModes == True Then
@@ -113,8 +116,8 @@ Func OpenExcel() ;Start up Excel or connect to a running instance.
    Return($oExcel)
 EndFunc
 
-Func OpenWorkbook($oExcel, $vWorkbookPad) ;Opens an existing Workbook.
-   Local $oWorkbook = _Excel_BookOpen($oExcel, $vWorkbookPad)
+Func OpenWorkbook($oExcel, $vWorkbookPath) ;Opens an existing Workbook.
+   Local $oWorkbook = _Excel_BookOpen($oExcel, $vWorkbookPath)
    If @error Then
 	  MsgBox(0, "QuRickstart error!", "Error opening the workbook." & @CRLF & "@error = " & @error & ", @extended = " & @extended)
 	  Wait()
