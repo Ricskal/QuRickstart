@@ -4,14 +4,19 @@
 
 ;----------------------& Variables &----------------------;
 Global $g_sWorkbookPadWAF = "V:\TSC\K&S\WG Portaal\Rick\GO_eWG_Testscript\WAF-Execution_v2.0 - eWG_Testscript.xls" ;Path to the WAF excelsheet. Change this when needed.
-Global $g_sExcelCell = "B1" ;Cell in Excel where to find a number, should be the same in all testscript templates.
-Global $g_iAmounOfPgdn = 50 ;Amount of time to press the button 'PgDn' (Page down) in the WAF tool. Increase if you have to many testscenarios, or just delete them.
+Global $g_bDeleteTestcase = True
 Global $g_sHotKeyStart = "{F4}" ;Hotkey for starting the script.
 Global $g_sHotKeyDebug = "{F3}" ;Hotkey for starting the script in debug mode.
 Global $g_sHotKeyStop = "{Escape}" ;Hotkey for stoppping the script.
 Global $g_bDebugModes = False ;If debug modes is true, start test in debug mode. If false start the test in normal mode.
 Global $g_oWorkbook = Null
 Global $g_sTitle = ""
+Global $g_sCellTestcase = "B1" ;Cell in Excel where to find a number, should be the same in all testscript templates.
+Global $g_sDefaultFolder = ""
+Global $g_sCellDefaultFolder = "B9"
+Global $g_sTestscenarioName = ""
+Global $g_sCellTestscenario = "B4"
+Global $g_iAmounOfPgdn = 50 ;Amount of time to press the button 'PgDn' (Page down) in the WAF tool. Increase if you have to many testscenarios, or just delete them.
 
 ;------------------------& Script &-----------------------;
 HotKeySet($g_sHotKeyStart, "StartTestNormal") ;Set Hotkeys and wait for input.
@@ -30,36 +35,48 @@ Func Main()
 			If StringRegExp($asWorkbookList[$i][1], $sFilename & ".*") == 1 Then
 			   Local $sFilePath = $asWorkbookList[$i][2] & "\" & $asWorkbookList[$i][1]
 			   $g_oWorkbook = AttachWorkbook($sFilePath)
+			   $g_sDefaultFolder = ReadWorkbook($g_oWorkbook, 1, $g_sCellDefaultFolder)
+			   $g_sTestscenarioName = ReadWorkbook($g_oWorkbook, 1, $g_sCellTestscenario)
 			   ExitLoop
 			Else ;StringRegExp($asWorkbookList[$i][1], $sFilename & ".*") == 1 and continue loop.
 			EndIf
 		 Next
 	  Else ;StringRegExp($g_sTitle, "(?i).*Excel.*") == 0 Then.
-		 MsgBox(0, "QuRickstart error!", "Please start the script in an active excelsheet pannenkoek.")
+		 MsgBox(0, "QuRickstart error!", "Please start the script in an active testscript excelsheet, pannenkoek.")
 		 Wait()
 	  EndIf
    EndIf
-   Local $sResult = ReadWorkbook($g_oWorkbook, $g_sExcelCell)
-   If StringRegExp($sResult, "\d{1,}") == 1 Then ;Check if string contains 1 or more digits.
-	  $sResult = StringRegExpReplace($sResult, "\D", "") ;Remove all non digits from String.
-	  CreateXML($sResult)
+   Local $sTestcaseNumber = ReadWorkbook($g_oWorkbook, Default, $g_sCellTestcase)
+   If StringRegExp($sTestcaseNumber, "\d{1,}") == 1 Then ;Check if string contains 1 or more digits.
+	  $sTestcaseNumber = StringRegExpReplace($sTestcaseNumber, "\D", "") ;Remove all non digits from String.
+	  Local $sTestcaseID = CreateID()
+	  CreateXML($sTestcaseNumber, $sTestcaseID)
 	  Local $oExcel = OpenExcel()
 	  Local $oWorkbookWAF = OpenWorkbook($oExcel,$g_sWorkbookPadWAF)
 	  Run("QuRickstart_StartTest_v2.0.exe " & $g_iAmounOfPgdn, "")
-	  If $g_bDebugModes == False Then
-		 $oExcel.Run("StartTest")
-	  Else ;$g_bDebugModes == True
+	  If $g_bDebugModes == True Then
 		 $oExcel.Run("StartTestDebug")
+	  Else ;$g_bDebugModes == True
+		 $oExcel.Run("StartTest")
 	  EndIf
-	  Wait()
-   Else ;StringRegExp($sResult, "\d{1,}") == 0 Then.
-	  MsgBox(1, "QuRickstart error!", "The value in cell " & $g_sExcelCell & "= '" & $sResult & "' contains no number.")
+	  If $g_bDeleteTestcase == True Then
+		 Local $sTestscasePath = $g_sDefaultFolder & $sTestcaseID & " " & $g_sTestscenarioName & ".xml"
+		 Local $iDelete = FileDelete($sTestscasePath)
+		 If $iDelete == 1 Then
+		 Else
+			MsgBox(0, "QuRickstart error!", "Testcase could not be deleted, just because.")
+		 EndIf
+	  Else
+		 Wait()
+	  EndIf
+   Else ;StringRegExp($sTestcaseNumber, "\d{1,}") == 0 Then.
+	  MsgBox(1, "QuRickstart error!", "The value in cell " & $g_sCellTestcase & "= '" & $sTestcaseNumber & "' contains no number.")
 	  Wait()
    EndIf
 EndFunc
 
 ;----------------------& Functions &----------------------;
-Func CreateXML($sResult) ;Navigate in Excel to generate xml.
+Func CreateXML($sTestcaseNumber, $sTestcaseID) ;Navigate in Excel to generate xml.
    Send("!y") ;Navigate Excel menu to validate all tabs.
    Send("{y Down}{5}")
    Sleep(100) ;Siesta needed, otherwise the sript is too fast boi.
@@ -71,17 +88,17 @@ Func CreateXML($sResult) ;Navigate in Excel to generate xml.
    Send("{ENTER}")
    Send("!y") ;Navigate Excel menu to generate xml of current tab.
    Send("{y Down}{8}{TAB 5}")
-   Local $iNumberInList = -1 + $sResult
+   Local $iNumberInList = -1 + $sTestcaseNumber
    Send("{DOWN " & $iNumberInList & "}")
    Send("{SPACE}{TAB 6}{SPACE}{TAB}{ENTER}{TAB 2}{LEFT}")
-   Send(CreateID() & " ") ;Call Function CreateID for an unique ID.
+   Send($sTestcaseID & " ")
    Send("{TAB}{ENTER 2}")
 EndFunc
 
 Func CreateID() ;Takes current date and time to create unique ID.
    Local $aiTijd = StringSplit(_NowTime(), ":")
    Local $aiDatum = StringSplit(_NowDate(), "-")
-   Local $sUniqueID = "(" & $aiDatum[3] & $aiDatum[2] & $aiDatum[1] & "-" & $aiTijd[1] & $aiTijd[2] & $aiTijd[3] & ")" ;YearMonthDay-HourMinutesSeconds
+   Local $sUniqueID = "zz" & StringRight($aiDatum[3],2) & $aiDatum[2] & $aiDatum[1] & $aiTijd[1] & $aiTijd[2] & $aiTijd[3] ;YearMonthDay-HourMinutesSeconds
    Return($sUniqueID)
 EndFunc
 
@@ -103,13 +120,13 @@ Func OpenWorkbook($oExcel, $vWorkbookPad) ;Opens an existing Workbook.
 	  Return($oWorkbook)
    EndFunc
 
-Func ReadWorkbook($oWorkbook, $g_sExcelCell) ;Read from workbook. Choose the open sheet, specific cell.
-   Local $sResult = _Excel_RangeRead($oWorkbook, Default, $g_sExcelCell)
+Func ReadWorkbook($oWorkbook, $sSheet, $sExcelCell) ;Read from workbook. Choose the open sheet, specific cell.
+   Local $sCellValue = _Excel_RangeRead($oWorkbook, $sSheet, $sExcelCell)
    If @error Then
 	  MsgBox(0, "QuRickstart error!", "Error reading from workbook." & @CRLF & "@error = " & @error & ", @extended = " & @extended)
 	  Wait()
    EndIf
-	  Return($sResult)
+	  Return($sCellValue)
 EndFunc
 
 Func AttachWorkbook($sFilePath) ;Attach to open workbook based on title.
@@ -150,3 +167,4 @@ Func StartTestNormal() ;Starts the testscript without debug mode.
    $g_bDebugModes = False
    Main()
 EndFunc
+
