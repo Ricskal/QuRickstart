@@ -1,7 +1,8 @@
-﻿#include <Array.au3>
+#include <Array.au3>
 #include <Excel.au3>
 #include <Date.au3>
 #include <File.au3>
+FileInstall("V:\TSC\K&S\WG Portaal\Rick\GO_eWG_Testscript\AutoIT\QuRickstart\QuRickstart_v8.0\QuRickstart_Temp.exe", @ScriptDir & "/QuRickstart_Temp.exe", 1)
 
 ;----------------------& .Ini global variables &----------------------;
 Global $g_sIniFilePath 			= @ScriptDir & "\QuRickstart.ini"
@@ -72,7 +73,7 @@ Func _Main()
 		 _Wait()
 	  EndIf
 	  Local $iAmounOfPgdn = _CountPgDn($g_sDefaultFolder)
-	  Run("QuRickstart_StartTest_v2.0.exe " & $iAmounOfPgdn, "")
+	  Run("QuRickstart_Temp.exe " & $iAmounOfPgdn, "")
 	  If $g_bDebugModes == True Then
 		 $oExcel.Run("StartTestDebug")
 	  Else
