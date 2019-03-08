@@ -1,8 +1,6 @@
-#include <Array.au3>
+﻿#include <Array.au3>
 #include <Excel.au3>
 #include <Date.au3>
-
-;Todo: count files for page down amount. Parameter file + exe. mouse position is kut.m
 
 ;----------------------& Variables &----------------------;
 Global $g_sWorkbookPadWAF = "V:\TSC\K&S\WG Portaal\Rick\GO_eWG_Testscript\WAF-Execution_v2.0 - eWG_Testscript.xls" ;Path to the WAF excelsheet. Change this when needed.
@@ -45,9 +43,14 @@ Func Main()
    If StringRegExp($sResult, "\d{1,}") == 1 Then ;Check if string contains 1 or more digits.
 	  $sResult = StringRegExpReplace($sResult, "\D", "") ;Remove all non digits from String.
 	  CreateXML($sResult)
-	  OpenWorkbook(OpenExcel(),$g_sWorkbookPadWAF)
-	  WinSetState("[ACTIVE]", "", @SW_MAXIMIZE)
-	  StartTest()
+	  Local $oExcel = OpenExcel()
+	  Local $oWorkbookWAF = OpenWorkbook($oExcel,$g_sWorkbookPadWAF)
+	  Run("QuRickstart_StartTest_v2.0.exe " & $g_iAmounOfPgdn, "")
+	  If $g_bDebugModes == False Then
+		 $oExcel.Run("StartTest")
+	  Else ;$g_bDebugModes == True
+		 $oExcel.Run("StartTestDebug")
+	  EndIf
 	  Wait()
    Else ;StringRegExp($sResult, "\d{1,}") == 0 Then.
 	  MsgBox(1, "QuRickstart error!", "The value in cell " & $g_sExcelCell & "= '" & $sResult & "' contains no number.")
@@ -82,15 +85,6 @@ Func CreateID() ;Takes current date and time to create unique ID.
    Return($sUniqueID)
 EndFunc
 
-Func StartTest() ;Runs the latest test in WAF excelsheet.
-   If $g_bDebugModes == False Then
-	  MouseClick($MOUSE_CLICK_LEFT, 1150, 230, 1, 0) ;Move mouse to "Start test".
-   Else ;$g_bDebugModes == True
-	  MouseClick($MOUSE_CLICK_LEFT, 1150, 340, 1, 0) ;Move mouse to "Start test (Debug modes)".
-   EndIf
-   Send("{TAB 2}{PGDN " & $g_iAmounOfPgdn & "}{SPACE}{TAB 2}{SPACE}{TAB 4}{SPACE}") ;Navigate the "Start test" menu, and select latest script.
-EndFunc
-
 Func OpenExcel() ;Start up Excel or connect to a running instance.
    local $oExcel = _Excel_Open()
    If @error Then
@@ -101,12 +95,12 @@ Func OpenExcel() ;Start up Excel or connect to a running instance.
 EndFunc
 
 Func OpenWorkbook($oExcel, $vWorkbookPad) ;Opens an existing Workbook.
-   Local $g_oWorkbook = _Excel_BookOpen($oExcel, $vWorkbookPad)
+   Local $oWorkbook = _Excel_BookOpen($oExcel, $vWorkbookPad)
    If @error Then
 	  MsgBox(0, "QuRickstart error!", "Error opening the workbook." & @CRLF & "@error = " & @error & ", @extended = " & @extended)
 	  Wait()
    EndIf
-	  Return($g_oWorkbook)
+	  Return($oWorkbook)
    EndFunc
 
 Func ReadWorkbook($oWorkbook, $g_sExcelCell) ;Read from workbook. Choose the open sheet, specific cell.
@@ -137,7 +131,7 @@ Func ListExcelWorkbooks() ;Lists and returns a list of all open Excel workbooks.
    EndFunc
 
 Func Wait() ;Waits until a hotkey is pressed.
-   While 1
+   While True
 	  Sleep(100)
    WEnd
 EndFunc
