@@ -13,21 +13,21 @@ Global $g_sIniFilePath 			= @ScriptDir & "\QuRickstartConfig.ini"
 Global $g_sHotKeyStart 			= IniRead($g_sIniFilePath, "Hotkeys"	, "HotKey_Start_Normal"			, "F4")
 Global $g_sHotKeyDebug 			= IniRead($g_sIniFilePath, "Hotkeys"	, "HotKey_Start_Debug"			, "F3")
 Global $g_sHotKeyStop 			= IniRead($g_sIniFilePath, "Hotkeys"	, "HotKey_Stop_QuRickstart"		, "Escape")
-Global $g_sWAFWorkbookPath		= IniRead($g_sIniFilePath, "WAF"		, "WAF_Workbook_Path"			, "")
+Global $g_sWAFWorkbookPath		= IniRead($g_sIniFilePath, "WAF"	, "WAF_Workbook_Path"			, "")
 If $g_sWAFWorkbookPath == "" Then
    MsgBox(0, "QuRickstart", "The path to the WAF workbook is empty, please add the path to the Quickstart.ini file." & @CRLF & @CRLF & "Stopping script..")
    Exit
 EndIf
-Global $g_bDeleteTestcase 		= IniRead($g_sIniFilePath, "Testcase"	, "Delete_XML_Testcase"			, True)
-Global $g_sCellTestscenario 	= IniRead($g_sIniFilePath, "CoverSheet"	, "Excel_Cell_Testscenario"		, "B4")
+Global $g_bDeleteTestcase 	= IniRead($g_sIniFilePath, "Testcase"	, "Delete_XML_Testcase"		, True)
+Global $g_sCellTestscenario 	= IniRead($g_sIniFilePath, "CoverSheet"	, "Excel_Cell_Testscenario"	, "B4")
 Global $g_sCellDefaultFolder 	= IniRead($g_sIniFilePath, "CoverSheet"	, "Excel_Cell_DefaultFolder"	, "B9")
 
 ;----------------------& Other global variables &----------------------;
 ;Initialise the other global variables.
-Global $g_bDebugModes 			= False
-Global $g_oWorkbook 			= Null
-Global $g_sTitle 				= ""
-Global $g_sDefaultFolder 		= ""
+Global $g_bDebugModes 		= False
+Global $g_oWorkbook 		= Null
+Global $g_sTitle 		= ""
+Global $g_sDefaultFolder 	= ""
 Global $g_sTestscenarioName 	= ""
 
 ;----------------------------& Script &-------------------------------;
@@ -37,8 +37,8 @@ HotKeySet("{" & $g_sHotKeyDebug	& "}", "_DebugModes")
 HotKeySet("{" & $g_sHotKeyStop 	& "}", "_ExitScript")
 _Wait()
 
-;Parameter:		Non.
-;Returns: 		Nothing.
+;Parameter:	Non.
+;Returns: 	Nothing.
 ;Description: 	Main script.
 Func _Main()
    If StringRegExp(WinGetTitle("[ACTIVE]"), "(?i).*Excel.*") == 0 Then ;Check if the opend program is Excel based on the window's title.
@@ -102,7 +102,7 @@ EndFunc
 
 ;---------------------------& Functions &---------------------------;
 ;Parameter: 	Non.
-;Returns: 		An ID (String).
+;Returns: 	An ID (String).
 ;Description: 	Generates an unique ID based on the date and time.
 Func _CreateID()
    Local $aiTijd = StringSplit(_NowTime(), ":")
@@ -111,9 +111,9 @@ Func _CreateID()
    Return($sUniqueID)
 EndFunc
 
-;Parameter:		1. Number of the testcase.
-;				2. Unique ID of the testcase.
-;Returns: 		Nothing.
+;Parameter:	1. Number of the testcase.
+;		2. Unique ID of the testcase.
+;Returns: 	Nothing.
 ;Description: 	Navigates the testscript excelsheet to validate the testcase and generate the XML file.
 Func _CreateXML($sTestcaseNumber, $sTestcaseID)
    Send("!y") ;Validate the XML.
@@ -134,9 +134,9 @@ Func _CreateXML($sTestcaseNumber, $sTestcaseID)
 EndFunc
 
 ;Parameter: 	1. Excel workbook object.
-;				2. Excel sheet number.
-;				3. Excel cell number.
-;Returns: 		The value of a Excel cell (String).
+;		2. Excel sheet number.
+;		3. Excel cell number.
+;Returns: 	The value of a Excel cell (String).
 ;Description: 	Reads an Excel workbook -> Sheet -> Cell to return the value.
 Func _ReadWorkbook($oWorkbook, $sSheet, $sExcelCell)
    Local $sCellValue = _Excel_RangeRead($oWorkbook, $sSheet, $sExcelCell)
@@ -147,8 +147,8 @@ Func _ReadWorkbook($oWorkbook, $sSheet, $sExcelCell)
    Return($sCellValue)
 EndFunc
 
-;Parameter:		A directory path.
-;Returns: 		Number (Integer).
+;Parameter:	A directory path.
+;Returns: 	Number (Integer).
 ;Description: 	Counts the number of files in a directory and calculates how many times to press the key PgDn to reach the last record in the WAF selection list.
 Func _CountPgDn($sDir)
    Local $aFileList = _FileListToArray($sDir)
@@ -165,8 +165,8 @@ Func _CountPgDn($sDir)
    Return $iAmounOfPgdn
 EndFunc
 
-;Parameter:		Excel workbook object.
-;Returns:		Number (Integer).
+;Parameter:	Excel workbook object.
+;Returns:	Number (Integer).
 ;Description:	Returns the position of the selected testcase relative to other testcases in the testscript.
 Func _TestcasePoistion($oWorkbook, $sCurrentSheet)
    Local $asSheetList = _Excel_SheetList($oWorkbook)
@@ -191,8 +191,8 @@ Func _TestcasePoistion($oWorkbook, $sCurrentSheet)
    Return $iIndexCurrentSheet +1 ;Current position of the sheet is the index in the array + 1, because the array starts at 0.
 EndFunc
 
-;Parameter:		Non.
-;Returns: 		Nothing.
+;Parameter:	Non.
+;Returns: 	Nothing.
 ;Description:	Sets the variable $g_bDebugModes to False and starts the main script.
 Func _StartTestNormal()
    $g_bDebugModes = False
@@ -200,8 +200,8 @@ Func _StartTestNormal()
    _Main()
 EndFunc
 
-;Parameter:		Non.
-;Returns: 		Nothing.
+;Parameter:	Non.
+;Returns: 	Nothing.
 ;Description: 	Sets the variable $g_bDebugModes to True and starts the main script.
 Func _DebugModes()
    $g_bDebugModes = True
@@ -209,8 +209,8 @@ Func _DebugModes()
    _Main()
 EndFunc
 
-;Parameter:		Non.
-;Returns: 		Nothing.
+;Parameter:	Non.
+;Returns: 	Nothing.
 ;Description: 	Just sleeps forever until a hotkey is pressed.
 Func _Wait()
    While True
@@ -218,8 +218,8 @@ Func _Wait()
    WEnd
 EndFunc
 
-;Parameter:		Non.
-;Returns: 		Nothing.
+;Parameter:	Non.
+;Returns: 	Nothing.
 ;Description: 	Exits the script.
 Func _ExitScript()
    TrayTip("QuRickstart", "Stopping QuRickstart.... >:(",10,1)
